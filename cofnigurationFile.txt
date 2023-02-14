@@ -1,0 +1,26 @@
+{
+"dataset":[
+{
+"name":"e_current", ← name of the variable (in influxdb will appear as measurement)
+"type":"double", ← type of the data (valid are: int32|int64|double|float|bool|string|json)
+"description":"readout electron current", ← an optional description
+"offset":24, ← offset into a binary key
+"len":8, ← data size 
+"factor":0, ← an optional factor that multiply the data
+ 
+"lbe":true, ← endianess true: little endian, false: bigendian
+ 
+"rate":1, ← >0 rate fetch-pushrate (in Hz)
+"keybind":"DCTEL002_DYN" ← source memcached key
+},
+{
+"name":"dafne_state",
+"type":"json", ← (the data is a utf-8 string, the type of data is implicit once imported in JSON)
+"description":"Dafne state",
+"offset":0, ← optional in case of json (if not is the offset inside the string)
+ 
+"variables":["jsonkey1","jsonkey2"], ← optional field that specifies the keys in the json to be pushed (if not specified, all keys must be pushed
+"len":256, ← maximum data length
+"keybind":"DAFNESTATE_JDAT"
+}]
+}
