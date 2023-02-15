@@ -9,17 +9,19 @@ import re
 def findTheKey(path, clientMemcached):
     with open(path,'r') as configFile:
         data = {}
-        pattern = r'\"(.+)\":(.+),'
+        pattern = r'^"(.+)":(.+,(( ←)|[^a-zA-Z ]))'
         for line in configFile:
             match = re.search(pattern,line)
             if(match):
                 match = re.search(pattern,line)
-                data[match.group(1)] = match.group(2)
-        
-        print (data)
-                
-    
-                
+                parameter = re.sub(r',|"|( ←)',"",match.group(2))
+                data[match.group(1)] = parameter
+            if(line.find('keybind') != -1):
+                match = re.search(pattern,line)
+                parameter = re.sub(r',|"|( ←)',"",match.group(2))
+                data[match.group(1)] = parameter
+                #value
+
             
 
 parser = argparse.ArgumentParser()
