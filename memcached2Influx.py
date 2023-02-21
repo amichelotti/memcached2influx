@@ -1,5 +1,6 @@
 import argparse
 from influxdb import InfluxDBClient
+from datetime import datetime
 import sys
 from pymemcache.client import base
 import os
@@ -17,10 +18,30 @@ def findTheKey(path, clientMemcached):
                 parameter = re.sub(r',|"|( ←)',"",match.group(2))
                 data[match.group(1)] = parameter
             if(line.find('keybind') != -1):
+                line = re.sub(r',|( ←)',"",line)
+                pattern = r'"(.+)":"(.+)"'
                 match = re.search(pattern,line)
-                parameter = re.sub(r',|"|( ←)',"",match.group(2))
-                data[match.group(1)] = parameter
-                #value
+                data[match.group(1)] = match.group(2)
+                data['memcached'] = clientMemcached.get(data['keybind'])
+                if(data['type'] == 'json'):
+                    data4influx = [{
+                        "measurements" : "memcachedData",
+                        "timestamp" : datetime.now(),
+                        "tags": {
+                            "type" : data["type"]
+                            },
+                        "fields" :{
+                            data["keybind"] : data ['memcached']
+                            }
+                        }
+                    ]
+                    print(data4influx)
+                    print('\n')
+                    clientInflux.write_points(data4influx)
+                    data.clear
+                else:
+                    pass
+                    
 
             
 
@@ -37,12 +58,11 @@ args = parser.parse_args()
 
 #log in the influx DB
 #python memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -f '/home/riccardo/Random bs go/Test/cofnigurationFile.txt' 
-#dcsMemDb
-try:
-    clientInflux = InfluxDBClient(host=args.server, port=args.port, username=args.username, password=args.password)
-    print("succesfully logged in")
-except:
-    sys.exit("Error: Invalid parameters, please try again")
+#try:
+clientInflux = InfluxDBClient(host=args.server, port=args.port, username=args.username, password=args.password)
+print("succesfully logged in\n")
+#except:
+ #   sys.exit("Error: Invalid parameters, please try again")
 
 #log in the memcached DB
 #memcached_server = "192.168.198.20"
