@@ -55,12 +55,12 @@ args = parser.parse_args()
 
 #log in the influx DB
 #python memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -f '/home/riccardo/Random bs go/Test/cofnigurationFile.txt' 
-#try:
-clientInflux = InfluxDBClient(host=args.server, port=args.port, username=args.username, password=args.password)
-clientInflux.switch_database("dcsMemDb")
-print("succesfully logged in\n")
-#except:
- #   sys.exit("Error: Invalid parameters, please try again")
+try:
+    clientInflux = InfluxDBClient(host=args.server, port=args.port, username=args.username, password=args.password)
+    clientInflux.switch_database("dcsMemDb")
+    print("succesfully logged in\n")
+except:
+    sys.exit("Error: Invalid parameters, please try again")
 
 #log in the memcached DB
 #memcached_server = "192.168.198.20"
@@ -82,4 +82,4 @@ try:
 except FileNotFoundError as e:
     sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
 except TypeError as e:
-    print("banana")
+    print("program ended succesfully")
