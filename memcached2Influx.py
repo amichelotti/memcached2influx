@@ -5,42 +5,38 @@ import sys
 from pymemcache.client import base
 import os
 import re
+import json
 
+#dafneStat
 
-def findTheKey(path, clientMemcached):
-    with open(path,'r') as configFile:
-        data = {}
-        pattern = r'^"(.+)":(.+,(( ←)|[^a-zA-Z ]))'
-        for line in configFile:
+def jsonPost2Influx(fileData,clientMemcached,clientInflux):
+    fileData['memcached'] = json.load(clientMemcached.get(fileData['keybind']))
+    payload = []
+    payload.append({
+            "measurement": "dafneStat",
+            "tags": {
+                "key": fileData["keybind"]
+            },
+            "fields": {
+                "data": json.dumps(fileData["memcached"])
+            }
+        })
+
+def findTheKey(configFile,path):
+    data = {}
+    pattern = r'^"(.+)":(.+,(( ←)|[^a-zA-Z ]))'
+    for line in configFile:
+        match = re.search(pattern,line)
+        if(match):
             match = re.search(pattern,line)
-            if(match):
-                match = re.search(pattern,line)
-                parameter = re.sub(r',|"|( ←)',"",match.group(2))
-                data[match.group(1)] = parameter
-            if(line.find('keybind') != -1):
-                line = re.sub(r',|( ←)',"",line)
-                pattern = r'"(.+)":"(.+)"'
-                match = re.search(pattern,line)
-                data[match.group(1)] = match.group(2)
-                data['memcached'] = clientMemcached.get(data['keybind'])
-                if(data['type'] == 'json'):
-                    data4influx = [{
-                        "measurements" : "memcachedData",
-                        "timestamp" : datetime.now(),
-                        "tags": {
-                            "type" : data["type"]
-                            },
-                        "fields" :{
-                            data["keybind"] : data ['memcached']
-                            }
-                        }
-                    ]
-                    print(data4influx)
-                    print('\n')
-                    clientInflux.write_points(data4influx)
-                    data.clear
-                else:
-                    pass
+            parameter = re.sub(r',|"|( ←)',"",match.group(2))
+            data[match.group(1)] = parameter
+        if(line.find('keybind') != -1):
+            line = re.sub(r',|( ←)',"",line)
+            pattern = r'"(.+)":"(.+)"'
+            match = re.search(pattern,line)
+            data[match.group(1)] = match.group(2)
+            return data
                     
 
             
@@ -74,6 +70,8 @@ except:
     
 #try:
   #  if os.path.isfile(args.file):
-key = findTheKey(args.file, clientMemcached)
+with open(args.file,'r') as configFile:
+    fileData = findTheKey(configFile, clientMemcached)
+    jsonPost2Influx(fileData,clientMemcached,clientInflux)
 #except FileNotFoundError as e:
  #   sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
