@@ -8,9 +8,9 @@ import re
 import json
 
 #dafneStat
-
-def jsonPost2Influx(fileData,clientMemcached,clientInflux):
-    fileData['memcached'] = json.load(clientMemcached.get(fileData['keybind']))
+def jsonData2Influx(fileData,clientMemcached):
+    jsonData = clientMemcached.get(fileData['keybind'])
+    fileData['memcached'] = json.loads(jsonData)
     payload = []
     payload.append({
             "measurement": "dafneStat",
@@ -21,6 +21,7 @@ def jsonPost2Influx(fileData,clientMemcached,clientInflux):
                 "data": json.dumps(fileData["memcached"])
             }
         })
+    return payload
 
 def findTheKey(configFile,path):
     data = {}
@@ -31,13 +32,13 @@ def findTheKey(configFile,path):
             match = re.search(pattern,line)
             parameter = re.sub(r',|"|( ←)',"",match.group(2))
             data[match.group(1)] = parameter
-        if(line.find('keybind') != -1):
+        elif(line.find('keybind') != -1):
             line = re.sub(r',|( ←)',"",line)
             pattern = r'"(.+)":"(.+)"'
             match = re.search(pattern,line)
             data[match.group(1)] = match.group(2)
             return data
-                    
+        
 
             
 
@@ -56,6 +57,7 @@ args = parser.parse_args()
 #python memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -f '/home/riccardo/Random bs go/Test/cofnigurationFile.txt' 
 #try:
 clientInflux = InfluxDBClient(host=args.server, port=args.port, username=args.username, password=args.password)
+clientInflux.switch_database("dcsMemDb")
 print("succesfully logged in\n")
 #except:
  #   sys.exit("Error: Invalid parameters, please try again")
@@ -68,10 +70,16 @@ try:
 except:
     sys.exit('Cannot reach the memcached server, try again later')
     
-#try:
-  #  if os.path.isfile(args.file):
-with open(args.file,'r') as configFile:
-    fileData = findTheKey(configFile, clientMemcached)
-    jsonPost2Influx(fileData,clientMemcached,clientInflux)
-#except FileNotFoundError as e:
- #   sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
+try:
+    if os.path.isfile(args.file):
+        with open(args.file,'r') as configFile:
+            while not (False):
+                fileData = findTheKey(configFile, clientMemcached)
+                payload = []
+                if fileData["type"] == "json":
+                    payload = jsonData2Influx(fileData,clientMemcached)
+                clientInflux.write_points(payload)
+except FileNotFoundError as e:
+    sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
+except TypeError as e:
+    print("banana")
