@@ -11,25 +11,29 @@ import json
 def jsonData2Influx(fileData,clientMemcached):
     jsonData = clientMemcached.get(fileData['keybind'])
     fileData['memcached'] = json.loads(jsonData)
-    payload = []
-    payload.append({
-            "measurement": "dafneStat",
-            "tags": {
-                "key": fileData["keybind"]
-            },
-            "fields": {
-                "data": json.dumps(fileData["memcached"])
-            }
+    for field in fileData["memcached"]:
+        payload = []
+        payload.append({
+                "measurement": "dafneStat",
+                "tags": {
+                    "key": fileData["keybind"]
+                },
+                "fields": {
+                    field:fileData["memcached"][field]
+                }
         })
     return payload
 
+
 def findTheKey(configFile,path):
     data = {}
+    #find all the line with usefull data, except for keybind
     pattern = r'^"(.+)":(.+,(( ←)|[^a-zA-Z ]))'
     for line in configFile:
         match = re.search(pattern,line)
+        #knowing that the keybind is always the last value, the return is set right after it
         if(match):
-            match = re.search(pattern,line)
+            #match = re.search(pattern,line)
             parameter = re.sub(r',|"|( ←)',"",match.group(2))
             data[match.group(1)] = parameter
         elif(line.find('keybind') != -1):
