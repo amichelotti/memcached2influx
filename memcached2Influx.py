@@ -7,25 +7,26 @@ import os
 import re
 import json
 
+    
 #dafneStat
 def jsonData2Influx(fileData,clientMemcached):
     jsonData = clientMemcached.get(fileData['keybind'])
     fileData['memcached'] = json.loads(jsonData)
+    payload = []
+    fields = {}
     for field in fileData["memcached"]:
-        payload = []
-        payload.append({
-                "measurement": "dafneStat",
-                "tags": {
-                    "key": fileData["keybind"]
-                },
-                "fields": {
-                    field:fileData["memcached"][field]
-                }
-        })
+        fields [field] = fileData["memcached"][field]
+    payload.append({
+            "measurement": "dafneStat",
+            "tags": {
+                "key": fileData["keybind"]
+            },
+            "fields": fields
+    })
     return payload
 
 
-def findTheKey(configFile,path):
+def findTheKey(configFile):
     data = {}
     #find all the line with usefull data, except for keybind
     pattern = r'^"(.+)":(.+,(( ←)|[^a-zA-Z ]))'
@@ -77,13 +78,16 @@ except:
 try:
     if os.path.isfile(args.file):
         with open(args.file,'r') as configFile:
-            while not (False):
-                fileData = findTheKey(configFile, clientMemcached)
+            while (True):
+                fileData = findTheKey(configFile)
                 payload = []
+                print (type(fileData))
+                if fileData == None:
+                    break
                 if fileData["type"] == "json":
                     payload = jsonData2Influx(fileData,clientMemcached)
-                clientInflux.write_points(payload)
+                    print (payload)
+                    clientInflux.write_points(payload)
 except FileNotFoundError as e:
     sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
-except TypeError as e:
-    print("program ended succesfully")
+print("program ended succesfully")
