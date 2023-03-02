@@ -9,19 +9,33 @@ import json
 
     
 #dafneStat
+def jsonKey2Influx(key, clientMemcached, name):
+    data = clientMemcached.get(key)
+    data = json.loads(data)
+    payload = []
+    payload.append({
+        "measurement": name,
+        "tags": {
+            "key": key,
+            "fields": data
+        }
+    })
+    print (payload)
+    return payload
+
 def jsonData2Influx(fileData,clientMemcached):
+    payload = []
     jsonData = clientMemcached.get(fileData['keybind'])
     fileData['memcached'] = json.loads(jsonData)
-    payload = []
-    fields = {}
-    for field in fileData["memcached"]:
-        fields [field] = fileData["memcached"][field]
+    
+    if(fileData["variables"]):
+        print (fileData["variables"])
     payload.append({
             "measurement": "dafneStat",
             "tags": {
                 "key": fileData["keybind"]
             },
-            "fields": fields
+            "fields": fileData["memcached"]
     })
     return payload
 
@@ -53,7 +67,9 @@ parser.add_argument("-u", "--username", required = False ,default="", help = "th
 parser.add_argument("-p", "--password", required = False ,default="", help = "the password needed to log in the db")
 parser.add_argument("-s", "--server", required = False , default="", help = "the ip address of the server")
 parser.add_argument("-d", "--database", required = False, default = "" , help = "the name of the database you want to log in")
-parser.add_argument("-f", "--file", default = "." , help = "the configuration file path")
+parser.add_argument("-f", "--file",required = False, help = "the configuration file path")
+parser.add_argument("-n", "--name",required = False, help = "if you're not using a configuration file, use this parameter to chose the name of the measurement")
+parser.add_argument("-k", "--key",required = False, help = "the key needed to find the data in the memcached DB")
 parser.add_argument("-po", "--port", help = "the port associated with the server address")
 
 args = parser.parse_args()
@@ -75,19 +91,29 @@ try:
 except:
     sys.exit('Cannot reach the memcached server, try again later')
     
-try:
-    if os.path.isfile(args.file):
-        with open(args.file,'r') as configFile:
-            while (True):
-                fileData = findTheKey(configFile)
-                payload = []
-                print (type(fileData))
-                if fileData == None:
-                    break
-                if fileData["type"] == "json":
-                    payload = jsonData2Influx(fileData,clientMemcached)
-                    print (payload)
-                    clientInflux.write_points(payload)
-except FileNotFoundError as e:
-    sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
-print("program ended succesfully")
+
+if args.key:
+    payload = []
+    if args.name:
+        payload = jsonKey2Influx(args.key, clientMemcached, args.name)
+    else:
+        payload = jsonKey2Influx(args.key, clientMemcached, args.key)
+    print (payload)     
+    clientInflux.write_points(payload)
+
+elif args.file:
+    try:
+        if os.path.isfile(args.file):
+            with open(args.file,'r') as configFile:
+                while (True):
+                    fileData = findTheKey(configFile)
+                    payload = []
+                    if fileData == None:
+                        break
+                    if fileData["type"] == "json":
+                        payload = jsonData2Influx(fileData,clientMemcached)
+                        print (payload)
+                        #clientInflux.write_points(payload)
+    except FileNotFoundError as e:
+        sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
+    print("program ended succesfully")
