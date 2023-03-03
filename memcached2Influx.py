@@ -8,7 +8,7 @@ import re
 import json
 
     
-#dafneStat
+#Kiwi
 def jsonKey2Influx(key, clientMemcached, name):
     data = clientMemcached.get(key)
     data = json.loads(data)
@@ -16,11 +16,10 @@ def jsonKey2Influx(key, clientMemcached, name):
     payload.append({
         "measurement": name,
         "tags": {
-            "key": key,
-            "fields": data
-        }
+            "key": key
+        },
+        "fields": data
     })
-    print (payload)
     return payload
 
 def jsonData2Influx(fileData,clientMemcached):
@@ -98,7 +97,6 @@ if args.key:
         payload = jsonKey2Influx(args.key, clientMemcached, args.name)
     else:
         payload = jsonKey2Influx(args.key, clientMemcached, args.key)
-    print (payload)     
     clientInflux.write_points(payload)
 
 elif args.file:
@@ -113,7 +111,8 @@ elif args.file:
                     if fileData["type"] == "json":
                         payload = jsonData2Influx(fileData,clientMemcached)
                         print (payload)
-                        #clientInflux.write_points(payload)
+                        print ('\n')
+                        clientInflux.write_points(payload)
     except FileNotFoundError as e:
         sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
     print("program ended succesfully")
