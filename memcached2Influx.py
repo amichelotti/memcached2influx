@@ -29,6 +29,7 @@ def jsonData2Influx(fileData,clientMemcached):
     fileData['memcached'] = json.loads(jsonData)
     
     if(fileData["variables"]):
+        print(fileData['variables'])
         print(fileData['memcached'])
         print(type(fileData['memcached']))
     payload.append({
@@ -108,7 +109,7 @@ if args.key:
             payload = jsonKey2Influx(args.key, clientMemcached, args.key)
         print('Publishing data')
         print(payload)
-        clientInflux.write_points(payload)
+        #clientInflux.write_points(payload)
         time.sleep(refreshRate)
 
 elif args.file:
@@ -116,7 +117,6 @@ elif args.file:
         open(args.file,'r')
     except FileNotFoundError as e:
         sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
-    print("program ended succesfully")
     if os.path.isfile(args.file):
         with open(args.file,'r') as configFile:
             while (True):
@@ -129,4 +129,4 @@ elif args.file:
                     print('Publishing into influx:')
                     print(payload)
                     print('\n')
-                    clientInflux.write_points(payload)
+                    #clientInflux.write_points(payload)
