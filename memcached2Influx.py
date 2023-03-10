@@ -1,7 +1,7 @@
 import argparse
 from influxdb import InfluxDBClient
 from datetime import datetime
-import sys
+import sys  
 from pymemcache.client import base
 import os
 import re
@@ -108,23 +108,25 @@ if args.key:
             payload = jsonKey2Influx(args.key, clientMemcached, args.key)
         print('Publishing data')
         print(payload)
-        #clientInflux.write_points(payload)
+        clientInflux.write_points(payload)
         time.sleep(refreshRate)
 
 elif args.file:
     try:
-        if os.path.isfile(args.file):
-            with open(args.file,'r') as configFile:
-                while (True):
-                    fileData = findTheKey(configFile)
-                    payload = []
-                    if fileData == None:
-                        break
-                    if fileData["type"] == "json":
-                        payload = jsonData2Influx(fileData,clientMemcached)
-                        print (payload)
-                        print ('\n')
-                        #clientInflux.write_points(payload)
+        open(args.file,'r')
     except FileNotFoundError as e:
         sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
     print("program ended succesfully")
+    if os.path.isfile(args.file):
+        with open(args.file,'r') as configFile:
+            while (True):
+                fileData = findTheKey(configFile)
+                payload = []
+                if fileData == None:
+                    break
+                if fileData["type"] == "json":  
+                    payload = jsonData2Influx(fileData,clientMemcached)
+                    print('Publishing into influx:')
+                    print(payload)
+                    print('\n')
+                    clientInflux.write_points(payload)
