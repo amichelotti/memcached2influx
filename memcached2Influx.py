@@ -28,10 +28,6 @@ def jsonData2Influx(fileData,clientMemcached):
     jsonData = clientMemcached.get(fileData['keybind'])
     fileData['memcached'] = json.loads(jsonData)
     
-    if(fileData["variables"]):
-        print(fileData['variables'])
-        print(fileData['memcached'])
-        print(type(fileData['memcached']))
     payload.append({
             "measurement": fileData["name"],
             "tags": {
@@ -99,8 +95,9 @@ except:
 
 if args.key:
     refreshRate = 5
-    if type(args.rate) == 'int':
-        refreshRate = args.rate
+    if args.rate:
+        refreshRate = int(args.rate)
+        
     while True:
         payload = []
         if args.name:
@@ -109,7 +106,7 @@ if args.key:
             payload = jsonKey2Influx(args.key, clientMemcached, args.key)
         print('Publishing data')
         print(payload)
-        clientInflux.write_points(payload)
+        #clientInflux.write_points(payload)
         time.sleep(refreshRate)
 
 elif args.file:
@@ -129,4 +126,4 @@ elif args.file:
                     print('Publishing into influx:')
                     print(payload)
                     print('\n')
-                    clientInflux.write_points(payload)
+                    #clientInflux.write_points(payload)

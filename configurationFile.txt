@@ -19,7 +19,7 @@
 "description":"Dafne state",
 "offset":0, ← optional in case of json (if not is the offset inside the string)
  
-"variables":["jsonkey1","jsonkey2"], ← optional field that specifies the keys in the json to be pushed (if not specified, all keys must be pushed
+"variables":["bunch_seq_1_32","execution"], ← optional field that specifies the keys in the json to be pushed (if not specified, all keys must be pushed
 "len":256, ← maximum data length
 "keybind":"DAFNESTATE_JDAT"
 }]
