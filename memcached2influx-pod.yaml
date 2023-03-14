@@ -1,0 +1,15 @@
+
+apiVersion: v1
+kind: Pod
+metadata:
+    labels:
+    app: memcached2influx
+  name: memcached2influx
+spec:
+  containers:
+    - name: python:3.10.8 
+      command: ["python", "main.py"]
+      args: ["-f", "--mysql_ip" , "dcsdb.lnf.infn.it","--dumpTime","60"]
+      image: michelo/dcs-monitor-alive:latest      
+  restartPolicy: OnFailure
+status: {}
