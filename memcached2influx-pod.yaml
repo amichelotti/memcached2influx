@@ -9,6 +9,7 @@ spec:
   containers:
     - name: memcached2influx 
       image: baltig.infn.it:4567/lnf-da-control/memcached2influx
+      imagePullPolicy: Always
       command: ["python", "memcached2Influx.py"]
       args: ["-s","vldantemon003.lnf.infn.it","-po","8086","-k","DAFNESTATELAB_JDAT","-r","10"] 
   restartPolicy: OnFailure
