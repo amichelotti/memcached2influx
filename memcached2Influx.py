@@ -106,7 +106,7 @@ if args.key:
             payload = jsonKey2Influx(args.key, clientMemcached, args.key)
         print('Publishing data')
         print(payload)
-        #clientInflux.write_points(payload)
+        clientInflux.write_points(payload)
         time.sleep(refreshRate)
 
 elif args.file:
@@ -126,4 +126,4 @@ elif args.file:
                     print('Publishing into influx:')
                     print(payload)
                     print('\n')
-                    #clientInflux.write_points(payload)
+                    clientInflux.write_points(payload)
