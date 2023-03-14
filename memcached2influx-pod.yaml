@@ -4,12 +4,12 @@ kind: Pod
 metadata:
     labels:
     app: memcached2influx
-  name: memcached2influx
+    name: memcached2influx
 spec:
   containers:
-    - name: python:3.10.8 
-      command: ["python", "main.py"]
-      args: ["-f", "--mysql_ip" , "dcsdb.lnf.infn.it","--dumpTime","60"]
-      image: michelo/dcs-monitor-alive:latest      
+    - name: memcached2influx 
+      image: baltig.infn.it:4567/lnf-da-control/memcached2influx
+      command: ["python", "memcached2Influx.py"]
+      args: ["-s","vldantemon003.lnf.infn.it","-po","8086","-k","DAFNESTATELAB_JDAT","-r","10"] 
   restartPolicy: OnFailure
 status: {}
