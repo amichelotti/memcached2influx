@@ -37,6 +37,21 @@ def jsonData2Influx(fileData,clientMemcached):
     })
     return payload
 
+def byteData2Influx(fileData,clientMemcached):
+    payload = []
+    byteArray = clientMemcached.get(fileData['keybind'])
+    fileData['memcached'] =byteArray[int(fileData['offset'])]
+    
+    payload.append({
+            "measurement": fileData["name"],
+            "tags": {
+                "key": fileData["keybind"]
+            },
+            "fields": {
+                fileData["name"] : fileData["memcached"]
+                }
+    })
+    return payload
 
 def findTheKey(configFile):
     data = {}
@@ -47,14 +62,13 @@ def findTheKey(configFile):
         #knowing that the keybind is always the last value, the return is set right after it
         if(match):
             #match = re.search(pattern,line)
-            parameter = re.sub(r'(,|"|( ←))(?![^\[\]]*\])',"",match.group(2))
+            parameter = re.sub(r'(,|"|( ←)|\n)(?![^\[\]]*\])',"",match.group(2))
             data[match.group(1)] = parameter
         elif(line.find('keybind') != -1):
             line = re.sub(r',|( ←)',"",line)
             pattern = r'"(.+)":"(.+)"'
             match = re.search(pattern,line)
             data[match.group(1)] = match.group(2)
-            data['name'] = data['name'][0:-1]
             return data
         
 
@@ -106,7 +120,7 @@ if args.key:
             payload = jsonKey2Influx(args.key, clientMemcached, args.key)
         print('Publishing data')
         print(payload)
-        clientInflux.write_points(payload)
+        #clientInflux.write_points(payload)
         time.sleep(refreshRate)
 
 elif args.file:
@@ -116,14 +130,23 @@ elif args.file:
         sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
     if os.path.isfile(args.file):
         with open(args.file,'r') as configFile:
+            
             while (True):
                 fileData = findTheKey(configFile)
                 payload = []
                 if fileData == None:
+                    print('f') 
                     break
-                if fileData["type"] == "json":  
+                elif fileData["type"] == "json":  
                     payload = jsonData2Influx(fileData,clientMemcached)
                     print('Publishing into influx:')
                     print(payload)
                     print('\n')
-                    clientInflux.write_points(payload)
+                    #clientInflux.write_points(payload)
+                elif fileData["type"] == "double":
+                    print("ffs")
+                    payload = byteData2Influx(fileData,clientMemcached)
+                    print('Publishing into influx:')
+                    print(payload)
+                    print('\n')
+                    
