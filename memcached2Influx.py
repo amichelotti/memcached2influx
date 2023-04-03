@@ -26,21 +26,26 @@ def jsonKey2Influx(key, clientMemcached, name):
 def jsonData2Influx(fileData,clientMemcached):
     payload = []
     jsonData = clientMemcached.get(fileData['keybind'])
-    fileData['memcached'] = json.loads(jsonData)
+    memcached = json.loads(jsonData)
+    fileData["rate"] = 5
+    fileData["currentTime"] = 0.0
     
     payload.append({
             "measurement": fileData["name"],
             "tags": {
                 "key": fileData["keybind"]
             },
-            "fields": fileData["memcached"]
+            "fields": memcached,
+            "parameter":fileData
     })
     return payload
 
 def byteData2Influx(fileData,clientMemcached):
     payload = []
     byteArray = clientMemcached.get(fileData['keybind'])
-    fileData['memcached'] =byteArray[int(fileData['offset'])]
+    memcached =byteArray[int(fileData['offset'])]
+    fileData["currentTime"] = 0.0
+    fileData["rate"] = int(fileData["rate"])
     
     payload.append({
             "measurement": fileData["name"],
@@ -48,8 +53,9 @@ def byteData2Influx(fileData,clientMemcached):
                 "key": fileData["keybind"]
             },
             "fields": {
-                fileData["name"] : fileData["memcached"]
-                }
+                fileData["name"] : memcached
+                },
+            "parameter" : fileData
     })
     return payload
 
@@ -131,22 +137,47 @@ elif args.file:
     if os.path.isfile(args.file):
         with open(args.file,'r') as configFile:
             
+            slowest = 0
+            payloadList = []
             while (True):
                 fileData = findTheKey(configFile)
-                payload = []
                 if fileData == None:
                     print('f') 
                     break
                 elif fileData["type"] == "json":  
-                    payload = jsonData2Influx(fileData,clientMemcached)
+                    payloadList.append(jsonData2Influx(fileData,clientMemcached))
                     print('Publishing into influx:')
-                    print(payload)
+                    #print(payloadList)
                     print('\n')
                     #clientInflux.write_points(payload)
                 elif fileData["type"] == "double":
-                    print("ffs")
-                    payload = byteData2Influx(fileData,clientMemcached)
+                    payloadList.append(byteData2Influx(fileData,clientMemcached))
                     print('Publishing into influx:')
-                    print(payload)
+                    #print(payloadList)
                     print('\n')
+                    #clientInflux.write_points(payload)
+                    
+            while (True):
+                time.sleep(1)
+                print ("waiting...")
+                for payload in payloadList:
+                    if (payload[0]["parameter"]["currentTime"] >= payload[0]["parameter"]["rate"]):
+                        payload[0]["parameter"]["currentTime"] = 0
+                        data = ({
+                                "measurement": payload[0]["parameter"]["name"],
+                                "tags": {
+                                    "key": payload[0]["parameter"]["keybind"]
+                                },
+                                "fields": {
+                                    payload[0]["parameter"]["name"] : payload[0]["fields"]
+                                    },
+                        })
+                        print("\nPublishing to influx:")
+                        print(data)
+                        print()
+                        #clientInflux.write_points(data)
+                    else:
+                        payload[0]["parameter"]["currentTime"] = payload[0]["parameter"]["currentTime"] +1
+                
+                
                     
