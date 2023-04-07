@@ -90,7 +90,7 @@ parser.add_argument("-f", "--file",required = False, help = "the configuration f
 parser.add_argument("-n", "--name",required = False, help = "if you're not using a configuration file, use this parameter to chose the name of the measurement")
 parser.add_argument("-k", "--key",required = False, help = "the key needed to find the data in the memcached DB")
 parser.add_argument("-po", "--port", help = "the port associated with the server address")
-parser.add_argument("-r", "--rate", required = False, default = 5, help = "specify the seconds between 2 different push in the influx db, use this option only if you're not using a configuration file")
+parser.add_argument("-r", "--rate", required = False, default = 0.10, help = "specify the seconds between 2 different push in the influx db")
 
 
 args = parser.parse_args()
@@ -126,7 +126,7 @@ if args.key:
             payload = jsonKey2Influx(args.key, clientMemcached, args.key)
         print('Publishing data')
         print(payload)
-        #clientInflux.write_points(payload)
+        clientInflux.write_points(payload)
         time.sleep(refreshRate)
 
 elif args.file:
@@ -147,19 +147,14 @@ elif args.file:
                 elif fileData["type"] == "json":  
                     payloadList.append(jsonData2Influx(fileData,clientMemcached))
                     print('Publishing into influx:')
-                    #print(payloadList)
                     print('\n')
-                    #clientInflux.write_points(payload)
                 elif fileData["type"] == "double":
                     payloadList.append(byteData2Influx(fileData,clientMemcached))
                     print('Publishing into influx:')
-                    #print(payloadList)
                     print('\n')
-                    #clientInflux.write_points(payload)
                     
             while (True):
-                time.sleep(1)
-                print ("waiting...")
+                time.sleep(args.rate)
                 for payload in payloadList:
                     if (payload[0]["parameter"]["currentTime"] >= payload[0]["parameter"]["rate"]):
                         payload[0]["parameter"]["currentTime"] = 0
@@ -175,9 +170,9 @@ elif args.file:
                         print("\nPublishing to influx:")
                         print(data)
                         print()
-                        #clientInflux.write_points(data)
+                        clientInflux.write_points(data)
                     else:
-                        payload[0]["parameter"]["currentTime"] = payload[0]["parameter"]["currentTime"] +1
-                
+                        payload[0]["parameter"]["currentTime"] = payload[0]["parameter"]["currentTime"] +args.rate
+                    
                 
                     
