@@ -90,7 +90,8 @@ parser.add_argument("-f", "--file",required = False, help = "the configuration f
 parser.add_argument("-n", "--name",required = False, help = "if you're not using a configuration file, use this parameter to chose the name of the measurement")
 parser.add_argument("-k", "--key",required = False, help = "the key needed to find the data in the memcached DB")
 parser.add_argument("-po", "--port", help = "the port associated with the server address")
-parser.add_argument("-r", "--rate", required = False, default = 0.10, help = "specify the seconds between 2 different push in the influx db")
+parser.add_argument("-kr", "--keyRate", required = False, default = 5, help = "when the program is not working with a configuration file, specify the seconds between 2 different push in the influx db")
+parser.add_argument("-fr", "--fileRate", required = False, default = 0.1, help = "when using a configuration file, specify the sleep time of the loop that check when and wich one of the key must be pushed")
 
 
 args = parser.parse_args()
@@ -114,11 +115,13 @@ except:
 
 
 if args.key:
-    refreshRate = 5
-    if args.rate:
-        refreshRate = int(args.rate)
-        
+    try:
+        args.keyRate = int(args.keyRate)
+    except ValueError as e :
+        print("the inserted rate value is not valid\nThe default value of 5 second will be set")
+        args.keyRate = 5
     while True:
+        print (args.keyRate)
         payload = []
         if args.name:
             payload = jsonKey2Influx(args.key, clientMemcached, args.name)
@@ -127,9 +130,14 @@ if args.key:
         print('Publishing data')
         print(payload)
         clientInflux.write_points(payload)
-        time.sleep(refreshRate)
+        time.sleep(args.keyRate)
 
 elif args.file:
+    try:
+        args.fileRate = int(args.fileRate)
+    except ValueError as e :
+        print("the inserted rate value is not valid\nThe default value of 0.1 second will be set")
+        args.fileRate = 0.1
     try:
         open(args.file,'r')
     except FileNotFoundError as e:
@@ -154,7 +162,7 @@ elif args.file:
                     print('\n')
                     
             while (True):
-                time.sleep(args.rate)
+                time.sleep(args.fileRate)
                 for payload in payloadList:
                     if (payload[0]["parameter"]["currentTime"] >= payload[0]["parameter"]["rate"]):
                         payload[0]["parameter"]["currentTime"] = 0
