@@ -9,7 +9,6 @@ import json
 import time
 
     
-#Kiwi
 def jsonKey2Influx(key, clientMemcached, name):
     data = clientMemcached.get(key)
     data = json.loads(data)
@@ -134,7 +133,7 @@ if args.key:
 
 elif args.file:
     try:
-        args.fileRate = int(args.fileRate)
+        args.fileRate = float(args.fileRate)
     except ValueError as e :
         print("the inserted rate value is not valid\nThe default value of 0.1 second will be set")
         args.fileRate = 0.1
@@ -180,7 +179,7 @@ elif args.file:
                         print()
                         clientInflux.write_points(data)
                     else:
-                        payload[0]["parameter"]["currentTime"] = payload[0]["parameter"]["currentTime"] +args.rate
+                        payload[0]["parameter"]["currentTime"] = payload[0]["parameter"]["currentTime"] +args.fileRate
                     
                 
                     
