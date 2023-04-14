@@ -31,6 +31,7 @@ some test of funtionality
 ```
 python memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -f '/home/riccardo/Random bs go/Git/memcached2influx/memcached2influx/cofnigurationFile.txt' 
 or
-python memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -k DAFNESTATELAB_JDAT -r 10
+ython memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -k DAFNESTATELAB_JDAT -r 10
 ```
 
+.
