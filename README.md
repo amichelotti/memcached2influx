@@ -33,9 +33,3 @@ python memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -f '/home/ricca
 or
 ython memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -k DAFNESTATELAB_JDAT -r 10
 ```
-<<<<<<< HEAD
-
-.
-=======
-b
->>>>>>> 776100ad3523b766fb4f575f7091e2b961d2be0f
