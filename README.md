@@ -31,6 +31,21 @@ some test of funtionality
 ```
 python memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -f '/home/riccardo/Random bs go/Git/memcached2influx/memcached2influx/cofnigurationFile.txt' 
 or
-python memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -k DAFNESTATELAB_JDAT -r 10
+python memcached2Influx.py -is vldantemon003.lnf.infn.it -ip 8086 -id dcsMemDb 
+-k DAFNESTATELAB_JDAT -kn test -kr 10 -ms 192.168.198.20 -mp 11211
 ```
+### usage
+this application has benn made to transfer data from a memcached server to an influx server, but there are 2 different way to do so.
 
+`using a configuration file.`
+In the project folder you can find a "configurationFile.txt" this file contain all the necessary data to retrive and optimize the process of transiction between the 2 server, and in order to use such file you should use a command line like this:
+```
+python memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -f '/home/riccardo/Random bs go/Git/memcached2influx/memcached2influx/cofnigurationFile.txt' 
+```
+`using key and rate`
+But if you don't have all this information all you don't want to use a configuration file, you can just use a key and a rate instead.
+With just a key and a publishing rate the program will know just what data you want to pubish and at wich rate, in order to do so you should use a command line like this
+```
+python memcached2Influx.py -is vldantemon003.lnf.infn.it -ip 8086 -id dcsMemDb 
+-k DAFNESTATELAB_JDAT -kn test -kr 10 -ms 192.168.198.20 -mp 11211
+```
