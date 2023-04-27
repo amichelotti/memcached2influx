@@ -5,26 +5,40 @@
 `pip install -r requirements.txt`
 
 ### help
-usage: memcached2Influx.py [-h] [-u USERNAME] [-p PASSWORD] [-s SERVER] [-d DATABASE]
-                           [-f FILE] [-n NAME] [-k KEY] [-po PORT] [-r RATE]
+usage: memcached2Influx.py [-h] [-u USERNAME] [-p PASSWORD] -is INFLUXSERVER
+                           -id INFLUXDATABASE [-ip INFLUXPORT] -ms
+                           MEMCACHEDSERVER [-mp MEMCACHEDPORT] [-k KEY]
+                           [-kn KEYNAME] [-kr KEYRATE] [-f FILE]
+                           [-fr FILERATE]
+
 
 options:
-  `-h` or `--help`	show this help message and exit
-  `-u` or `--username` --username USERNAME
-                        the username needed to log in the db
-  `-p` or `--password` --password PASSWORD
-                        the password needed to log in the db
-  `-s` or `--server` --server SERVER
-                        the ip address of the server
-  `-d` or `--database` --database DATABASE
-                        the name of the database you want to log in
-  `-f` or `--file` --file FILE  the configuration file path
-  `-n` or `--name` --name NAME  if you're not using a configuration file, use this parameter to
-                        chose the name of the measurement
-  `-k` or `--key` KEY     the key needed to find the data in the memcached DB
-  `-po` or `--port` PORT	the port associated with the server address
-  `-r` or `--rate` RATE  specify the seconds between 2 different push in the influx db,
-                        use this option only if you're not using a configuration file
+  `-h` or `--help`            show this help message and exit
+
+  `-u` or `--username`    the username needed to log in the db
+  
+  `-p` or `--password`    the password needed to log in the db
+
+  `-is` or `--influxServer`   the address of the influx server
+
+  `-id` or `--influxDatabase`   the name of the database you want to log in
+
+  `-ip` or `--influxPort`    the port associated with the server address
+
+  `-ms` or `--memcachedServer`    the address of the memcached server
+
+  `-mp` or `--memcachedPort`    the port of the memcached server
+
+  `-k` or `--key`   the key needed to find the data in the memcached DB
+
+  `-kn` or `--keyName`    if you're not using a configuration file, use this parameter to chose the name of the measurement
+
+  `-kr` or `--keyRate`    when the program is not working with a configuration file, specify the seconds between 2 different push in the influx db
+
+  `-f` or `--file`    the configuration file path
+
+  `-fr` or `--fileRate`   when using a configuration file, specify the sleep time of the loop that check when and wich one of the key must be pushed
+
 
 ### test
 some test of funtionality
