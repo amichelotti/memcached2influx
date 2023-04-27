@@ -185,8 +185,9 @@ elif args.file:
                         })
                         print("\nPublishing to influx:")
                         print(data)
-                        print(type(data["tags"]))
-                        clientInflux.write_points(data)
+                        print()
+                        wrapData = [data]
+                        clientInflux.write_points(wrapData)
                     else:
                         payload[0]["parameter"]["currentTime"] = payload[0]["parameter"]["currentTime"] +args.fileRate
                     
