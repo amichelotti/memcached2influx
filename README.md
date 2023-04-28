@@ -50,7 +50,7 @@ python memcached2Influx.py -is vldantemon003.lnf.infn.it -ip 8086 -id dcsMemDb
 -k DAFNESTATELAB_JDAT -kn test -kr 10 -ms 192.168.198.20 -mp 11211
 ```
 ### usage
-this application has benn made to transfer data from a memcached server to an influx server, but there are 2 different way to do so.
+this application has been made to transfer data from a memcached server to an influx server, but there are 2 different way to do so.
 
 `using a configuration file.`
 In the project folder you can find a "configurationFile.txt" this file contain all the necessary data to retrive and optimize the process of transiction between the 2 server, and in order to use such file you should use a command line like this:
