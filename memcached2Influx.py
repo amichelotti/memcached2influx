@@ -125,6 +125,7 @@ except:
 
 
 if args.key:
+    vector_key=split_list = args.key.split(",")  # Splitting at comma delimiter
     try:
         args.keyRate = int(args.keyRate)
     except ValueError as e :
@@ -135,12 +136,14 @@ if args.key:
         name = args.keyName
     else:
         name = args.key
+        
     while True:
         payload = []
-        payload = jsonKey2Influx(args.key, clientMemcached, name)
-        print('Publishing data')
-        print(payload)
-        clientInflux.write_points(payload)
+        for s in vector_key:
+            payload = jsonKey2Influx(s, clientMemcached, s)
+            print('Publishing data')
+            print(payload)
+            clientInflux.write_points(payload)
         time.sleep(args.keyRate)
 
 elif args.file:
