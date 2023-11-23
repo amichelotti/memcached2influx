@@ -6,6 +6,8 @@ stages:
     - deploy
 
 build_image:
+  tags:
+    - lnf
   stage: build
   image: docker:latest # 19.03.12
   variables:
