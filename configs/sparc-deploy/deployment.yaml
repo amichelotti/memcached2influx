@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memcached2influx
+  labels:
+    app: memcached2influx
+spec:
+  selector:
+    matchLabels:
+      app: memcached2influx
+  template:
+    metadata:
+      labels:
+        app: memcached2influx
+    spec:
+      containers:
+        - name: memcached2influx
+          image: baltig.infn.it:4567/lnf-da-control/memcached2influx
+          imagePullPolicy: Always
+          command: ["python", "memcached2Influx.py"]
+          args: ["-is","vldantemon003.lnf.infn.it", "-ms", "plsparcmem001.lnf.infn.it", "-id","dcsMemDb","-f","sparc_temp.json"]
+  restartPolicy: OnFailure
+status: {}
