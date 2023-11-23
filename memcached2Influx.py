@@ -7,6 +7,7 @@ import os
 import re
 import json
 import time
+import struct
 
     
 def jsonKey2Influx(key, clientMemcached, name):
@@ -22,10 +23,10 @@ def jsonKey2Influx(key, clientMemcached, name):
     })
     return payload
 
-def jsonData2Influx(fileData,clientMemcached):
+def memData2Influx(fileData,clientMemcached):
     payload = []
-    jsonData = clientMemcached.get(fileData['keybind'])
-    memcached = json.loads(jsonData)
+    memData = clientMemcached.get(fileData['keybind'])
+    memcached = json.loads(memData)
     fileData["rate"] = 5
     fileData["currentTime"] = 0.0
     
@@ -86,8 +87,8 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("-u", "--username", required = False ,default="", help = "the username needed to log in the db")
 parser.add_argument("-p", "--password", required = False ,default="", help = "the password needed to log in the db")
-parser.add_argument("-is", "--influxServer",required = True, help = "the address of the influx server")
-parser.add_argument("-id", "--influxDatabase", required = True, help = "the name of the database you want to log in")
+parser.add_argument("-is", "--influxServer",required = False, help = "the address of the influx server, if not given just read memcached")
+parser.add_argument("-id", "--influxDatabase", required = False, help = "the name of the database you want to log in, if not given just read memcached")
 parser.add_argument("-ip", "--influxPort",required = False, default = 8086, help = "the port associated with the server address")
 parser.add_argument("-ms", "--memcachedServer",required = True, help = "the address of the memcached server")
 parser.add_argument("-mp", "--memcachedPort",required = False, default = 11211, help = "the port of the memcached server")
@@ -95,7 +96,7 @@ parser.add_argument("-k", "--key",required = False, help = "the key needed to fi
 parser.add_argument("-kn", "--keyName",required = False, help = "if you're not using a configuration file, use this parameter to chose the name of the measurement")
 parser.add_argument("-kr", "--keyRate", required = False, default = 5, help = "when the program is not working with a configuration file, specify the seconds between 2 different push in the influx db")
 parser.add_argument("-f", "--file",required = False, help = "the configuration file path")
-parser.add_argument("-fr", "--fileRate", required = False, default = 0.1, help = "when using a configuration file, specify the sleep time of the loop that check when and wich one of the key must be pushed")
+parser.add_argument("-fr", "--fileRate", required = False, default = 1000.0, help = "when using a configuration file, specify the sleep time in milliseconds of the loop that check when and wich one of the key must be pushed")
 
 
 args = parser.parse_args()
@@ -103,10 +104,15 @@ args = parser.parse_args()
 #log in the influx DB
 #dcsMemDb
 #python memcached2Influx.py -s vldantemon003.lnf.infn.it -po 8086 -f '/home/riccardo/Random bs go/Test/cofnigurationFile.txt' 
+clientInflux=None
 try:
-    clientInflux = InfluxDBClient(host=args.influxServer, port=args.influxPort, username=args.username, password=args.password)
-    clientInflux.switch_database(args.influxDatabase)
-    print("succesfully logged in\n")
+    if args.influxServer:
+        clientInflux = InfluxDBClient(host=args.influxServer, port=args.influxPort, username=args.username, password=args.password)
+        clientInflux.switch_database(args.influxDatabase)
+        print(f"Succesfully logged in {args.influxServer} db {args.influxDatabase}")
+    else:
+        print("NO INFLUX SPECIFIED, PERFORM MEMCACHED READ ONLY")
+        
 except:
     print("Error: impossible to connect to influx with the following parameter")
     print("username = "+args.username)
@@ -143,7 +149,8 @@ if args.key:
             payload = jsonKey2Influx(s, clientMemcached, s)
             print('Publishing data')
             print(payload)
-            clientInflux.write_points(payload)
+            if clientInflux:
+                clientInflux.write_points(payload)
         time.sleep(args.keyRate)
 
 elif args.file:
@@ -152,47 +159,74 @@ elif args.file:
     except ValueError as e :
         print("the inserted rate value is not valid\nThe default value of 0.1 second will be set")
         args.fileRate = 0.1
-    try:
-        open(args.file,'r')
-    except FileNotFoundError as e:
-        sys.exit("Error: " + args.iptable + " is not valid or does not point to a DBFile.")
-    if os.path.isfile(args.file):
-        with open(args.file,'r') as configFile:
-            
-            slowest = 0
-            payloadList = []
-            while (True):
-                fileData = findTheKey(configFile)
-                if fileData == None:
-                    print('list done') 
-                    break
-                elif fileData["type"] == "json":  
-                    payloadList.append(jsonData2Influx(fileData,clientMemcached))
-                elif fileData["type"] == "double":
-                    payloadList.append(byteData2Influx(fileData,clientMemcached))
-                    
-            while (True):
-                time.sleep(args.fileRate)
-                for payload in payloadList:
-                    if (payload[0]["parameter"]["currentTime"] >= payload[0]["parameter"]["rate"]):
-                        payload[0]["parameter"]["currentTime"] = 0
-                        name = payload[0]["parameter"]["name"]
-                        data = ({
-                                "measurement": name,
-                                "tags": {
-                                    "key": payload[0]["parameter"]["keybind"]
-                                },
-                                "fields": {
-                                    name : payload[0]["fields"][name]
-                                    },
-                        })
-                        print("\nPublishing to influx:")
-                        print(data)
-                        print()
-                        wrapData = [data]
-                        clientInflux.write_points(wrapData)
+    with open(args.file,'r') as jsonfile:
+        tofetch=json.load(jsonfile)['dataset']
+        cache={}
+        for k in tofetch:
+            k['time']=time.time()
+            if not 'rate' in k:
+                k['rate']=5
+        vdatapoints=[]
+        while (True):
+            now=time.time()
+            for k in tofetch:
+                if (now-k['time']) > k['rate']:
+                    if k['keybind'] in cache and now-cache[k['keybind']]['time']<k['rate']:
+                        ## take data from cache
+                        memData = cache[k['keybind']]['data']
+                        k['time']=cache[k['keybind']]['time']
+
                     else:
-                        payload[0]["parameter"]["currentTime"] = payload[0]["parameter"]["currentTime"] +args.fileRate
-                    
-                
-                    
+                        memData = clientMemcached.get(k['keybind'])
+                        cache[k['keybind']]={'data':memData,'time':now}
+                        k['time']=now
+                    byteArray=memData[k['offset']:k['offset']+k['len']]
+                    fields = {} 
+                    offset_value=0
+                    factor_value=1
+                    bigendian=""
+                    value = None
+                    if 'lbe' in k  and not k['lbe']: ## big endian
+                        bigendian=">"
+                        
+                    if 'factor' in k:
+                        factor_value=k['factor']
+                    if 'offset_value' in k:
+                        offset_value=k['offset_value']
+
+                    if k['type'] == "double":
+                        value = struct.unpack(bigendian+'d', byteArray)[0]
+                        value = value*factor_value + offset_value
+                    if k['type'] == "int" or k['type'] == "int32":
+                            value = struct.unpack(bigendian+'i', byteArray)[0]
+                            value = value*factor_value + offset_value
+
+                    if k['type'] == "int64" :
+                            value = struct.unpack(bigendian+'q', byteArray)[0]
+                            value = value*factor_value + offset_value
+                    if k['type'] == "bool" :
+                            value =bool(byteArray[0])
+                    if k['type'] == "string" :
+                            value =byteArray
+                    if value:
+                        if 'varname' in k:
+                            fields = {k['varname']: value}
+                        else:
+                            fields = {'val': value}
+
+
+                        data_point = {
+                        "measurement": k['name'],
+                        "time": datetime.utcnow(),
+                        "fields": fields
+                        }
+                        vdatapoints.append(data_point)
+
+            if len(vdatapoints):
+                print(vdatapoints)
+
+                if clientInflux:
+                    clientInflux.write_points(vdatapoints)
+                vdatapoints=[]
+
+            time.sleep(args.fileRate/1000.0)
