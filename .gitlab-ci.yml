@@ -26,12 +26,11 @@ build_image:
     DOCKER_HOST: tcp://docker:2375
     #
     # This instructs Docker not to start over TLS.
-    # DOCKER_TLS_CERTDIR: ""
+    DOCKER_TLS_CERTDIR: ""
 
   
   script:
-    - export https_proxy=http://squid.lnf.infn.it:3128
-    - export http_proxy=http://squid.lnf.infn.it:3128
+   
     - docker login baltig.infn.it:4567 -u amichelo -p ${DOCKER_REGISTRY}
     - docker build --no-cache -f Dockerfile -t baltig.infn.it:4567/lnf-da-control/memcached2influx .
     - docker push baltig.infn.it:4567/lnf-da-control/memcached2influx
