@@ -7,7 +7,7 @@ stages:
 
 build_image:
   stage: build
-  image: docker:19.03.12
+  image: docker:latest # 19.03.12
   variables:
     # When using dind service, you must instruct docker to talk with the
     # daemon started inside of the service. The daemon is available with
