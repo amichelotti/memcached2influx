@@ -6,8 +6,8 @@ stages:
     - deploy
 
 build_image:
-  tags:
-    - lnf
+#  tags:
+#    - lnf
   stage: build
   image: docker:19.03.12
   variables:
@@ -23,14 +23,14 @@ build_image:
     # Kubernetes executor connects services to the job container
     # DOCKER_HOST: tcp://localhost:2375
     #
-    DOCKER_HOST: tcp://docker:2375
+    # DOCKER_HOST: tcp://docker:2375
     #
     # This instructs Docker not to start over TLS.
     DOCKER_TLS_CERTDIR: ""
 
   
   script:
-   
+
     - docker login baltig.infn.it:4567 -u amichelo -p ${DOCKER_REGISTRY}
     - docker build --no-cache -f Dockerfile -t baltig.infn.it:4567/lnf-da-control/memcached2influx .
     - docker push baltig.infn.it:4567/lnf-da-control/memcached2influx
