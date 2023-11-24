@@ -180,47 +180,96 @@ elif args.file:
                         memData = clientMemcached.get(k['keybind'])
                         cache[k['keybind']]={'data':memData,'time':now}
                         k['time']=now
-                    byteArray=memData[k['offset']:k['offset']+k['len']]
-                    fields = {} 
-                    offset_value=0
-                    factor_value=1
-                    bigendian=""
-                    value = None
-                    if 'lbe' in k  and not k['lbe']: ## big endian
-                        bigendian=">"
-                        
-                    if 'factor' in k:
-                        factor_value=k['factor']
-                    if 'offset_value' in k:
-                        offset_value=k['offset_value']
+                    if k['type'] == "json":
+                        jvalue=memData.decode('utf-8')
+                        dictj=json.loads(jvalue)
+                        if len(dictj.keys())==1:
+                            ## the dict is named
+                            val=next(iter(dictj.values()))
+                            if isinstance(val,dict):
+                                dictj=val
+                            
+                        for item in dictj.items():
+                            key, value = item
+                            if isinstance(value, (int, float, str, bool)):
+                                no_spaces = key.replace(" ", "")
 
-                    if k['type'] == "double":
-                        value = struct.unpack(bigendian+'d', byteArray)[0]
-                        value = value*factor_value + offset_value
-                    if k['type'] == "int" or k['type'] == "int32":
-                            value = struct.unpack(bigendian+'i', byteArray)[0]
+                                pattern = re.compile('[\W_]+')
+                                result = re.sub(pattern, '', no_spaces)
+                                # print(f'Key: {result.lower()}, Value: {value}')
+                                data_point = {
+                                    "measurement": k['name'],
+                                    "time": datetime.utcnow(),
+                                    "fields": {result.lower():value}
+                                }
+                                vdatapoints.append(data_point)
+
+                    else:
+                        if k['offset']<0:
+                            ## start from end
+                            k['offset']=len(memData)+k['offset']
+                        byteArray=memData[k['offset']:k['offset']+k['len']]
+                        fields = {} 
+                        offset_value=0
+                        factor_value=1
+                        bigendian=""
+                        value = None
+                        if 'lbe' in k  and not k['lbe']: ## big endian
+                            bigendian=">"
+                            
+                        if 'factor' in k:
+                            factor_value=k['factor']
+                        if 'offset_value' in k:
+                            offset_value=k['offset_value']
+
+                        if k['type'] == "double":
+                            value = struct.unpack(bigendian+'d', byteArray)[0]
                             value = value*factor_value + offset_value
+                        if k['type'] == "int" or k['type'] == "int32":
+                                value = struct.unpack(bigendian+'i', byteArray)[0]
+                                value = value*factor_value + offset_value
 
-                    if k['type'] == "int64" :
-                            value = struct.unpack(bigendian+'q', byteArray)[0]
-                            value = value*factor_value + offset_value
-                    if k['type'] == "bool" :
-                            value =bool(byteArray[0])
-                    if k['type'] == "string" :
-                            value =byteArray
-                    if value:
-                        if 'varname' in k:
-                            fields = {k['varname']: value}
-                        else:
-                            fields = {'val': value}
-
-
-                        data_point = {
-                        "measurement": k['name'],
-                        "time": datetime.utcnow(),
-                        "fields": fields
-                        }
-                        vdatapoints.append(data_point)
+                        if k['type'] == "int64" :
+                                value = struct.unpack(bigendian+'q', byteArray)[0]
+                                value = value*factor_value + offset_value
+                        if k['type'] == "bool" :
+                                value =bool(byteArray[0])
+                        if k['type'] == "string" :
+                                value =byteArray.decode('utf8')
+                        if k['type'] == "vdouble":
+                                nvals=k['len']//8
+                                value = struct.unpack(bigendian+'d'*nvals, byteArray)
+                                result_vector = [(val * factor_value + offset_value) for val in value]
+                                value=result_vector
+                                    
+                        if value is not None:
+                            fname='val'
+                            if 'varname' in k:
+                                fname=k['varname']
+            
+                            if isinstance(value,list):
+                                cnt=0
+                                for v in value:
+                                    if isinstance(fname,list): 
+                                        fields = {fname[cnt]: v}
+                                    else:
+                                        fields = {fname+str(cnt): v}
+                                    data_point = {
+                                    "measurement": k['name'],
+                                    "time": datetime.utcnow(),
+                                    "fields": fields
+                                    }
+                                    vdatapoints.append(data_point)
+                                    cnt=cnt+1
+                                    
+                            else:
+                                fields = {fname: value}
+                                data_point = {
+                                "measurement": k['name'],
+                                "time": datetime.utcnow(),
+                                "fields": fields
+                                }
+                                vdatapoints.append(data_point)
 
             if len(vdatapoints):
                 print(vdatapoints)

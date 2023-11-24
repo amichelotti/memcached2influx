@@ -32,8 +32,8 @@ build_image:
   script:
 
     - docker login baltig.infn.it:4567 -u amichelo -p ${DOCKER_REGISTRY}
-    - docker build --no-cache -f Dockerfile -t baltig.infn.it:4567/lnf-da-control/memcached2influx .
-    - docker push baltig.infn.it:4567/lnf-da-control/memcached2influx
+    - docker build --no-cache -f Dockerfile -t baltig.infn.it:4567/lnf-da-control/memcached2influx:1.0 .
+    - docker push baltig.infn.it:4567/lnf-da-control/memcached2influx:1.0
 
 deploy_dafne:
    stage: deploy
