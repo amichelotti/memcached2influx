@@ -125,43 +125,48 @@
         },
         {
             "name": "SPARC:AC1BCM01",
-            "type": "json",
+            "type": "json","factor":1.0,
+
             "description": "Charge",
             "rate": 10,
             "keybind": "AC1BCM01_DYN"
         },{
             "name": "SPARC:AC1FBCM1",
-            "type": "json",
+            "type": "json","factor":1.0,
             "description": "Charge",
             "rate": 10,
             "keybind": "AC1FBCM1_DYN"
         },{
             "name": "SPARC:AC1FCP01",
-            "type": "json",
+            "type": "json","factor":1.0,
+
             "description": "Charge",
             "rate": 10,
             "keybind": "AC1FCP01_DYN"
         },{
             "name": "SPARC:AC2BCM01",
-            "type": "json",
+            "type": "json","factor":1.0,
             "description": "Charge",
             "rate": 10,
             "keybind": "AC2BCM01_DYN"
         },{
             "name": "SPARC:DGLBCM01",
-            "type": "json",
+            "type": "json","factor":1.0,
+
             "description": "Charge",
             "rate": 10,
             "keybind": "DGLBCM01_DYN"
         },{
             "name": "SPARC:DGLBCM02",
-            "type": "json",
+            "type": "json","factor":1.0,
+
             "description": "Charge",
             "rate": 10,
             "keybind": "DGLBCM02_DYN"
         },{
             "name": "SPARC:PTLBCM01",
-            "type": "json",
+            "type": "json","factor":1.0,
+
             "description": "Charge",
             "rate": 10,
             "keybind": "PTLBCM01_DYN"

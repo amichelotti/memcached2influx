@@ -197,6 +197,12 @@ elif args.file:
                                 pattern = re.compile('[\W_]+')
                                 result = re.sub(pattern, '', no_spaces)
                                 # print(f'Key: {result.lower()}, Value: {value}')
+                                if isinstance(value,(int,float)):
+                                    if 'factor' in k:
+                                        value=value*k['factor']
+                                    if 'offset_value' in k:
+                                        value=value+k['offset_value']
+                                        
                                 data_point = {
                                     "measurement": k['name'],
                                     "time": datetime.utcnow(),
